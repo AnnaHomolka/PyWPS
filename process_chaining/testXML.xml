@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+
+
+<workflow identifier="new_chain">
+
+<inputs>
+<input defaultValue = "5" localIdentifier = "Input1" title="erster Input"/> 
+<input defaultValue = "4" localIdentifier = "Input2" title="zweiter Input"/> 
+<input defaultValue = "6" localIdentifier = "Input3" title="dritter Input"/>
+</inputs>
+
+<startProcess service="http://localhost/cgi-bin/pywps.cgi" processID="dummyprocess" identifier ="dummyprocess" >
+<input sourceIdentifier = "Input1" identifier = "i1"/> 
+<input sourceIdentifier = "Input2" identifier = "i2"/> 
+<input sourceIdentifier = "Input3" identifier = "i3"/>
+<output localIdentifier = "x" identifier ="output1"/> 
+</startProcess>
+
+<startProcess service="http://localhost/cgi-bin/pywps.cgi" processID="dummyprocess2" identifier ="dummyprocess2">
+<input sourceProcess = "dummyprocess" sourceName = "output1" identifier="i1"/> 
+<input sourceProcess = "dummyprocess" sourceName = "output1" identifier="i2"/>
+<input sourceProcess = "dummyprocess" sourceName = "output2" identifier="i3"/>
+</startProcess>
+
+<startProcess service="http://localhost/cgi-bin/pywps.cgi" processID="dummyprocess2_2" identifier ="dummyprocess2">
+<input sourceProcess = "dummyprocess" sourceName = "output1" identifier="i1"/> 
+<input sourceProcess = "dummyprocess" sourceName = "output1" identifier="i2"/>
+<input localIdentifier="x" identifier="i3"/>
+</startProcess>
+
+<outputs>
+<output sourceProcess="dummyprocess" sourceIdentifier="output1" />
+<output sourceProcess="dummyprocess2" sourceIdentifier="output" />
+<output localIdentifier="x" />
+</outputs>
+</workflow>
