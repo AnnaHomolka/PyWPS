@@ -1,13 +1,9 @@
-""" to do:
-	Passwort fertig
-	falls prozess schon vorhanden nicht nochmal in __init__.py eifnuegen
-""" 
-
 from pywps.Process import WPSProcess                                
 from xml.sax import make_parser
 from handlers import ProcessHandler
 from pywps import config
 import re
+import os.path
 
 class Process(WPSProcess):
      def __init__(self):
@@ -29,7 +25,8 @@ class Process(WPSProcess):
      def execute(self):
 	 
 	 process_path=config.getConfigValue("server","processesPath")
-	 	 
+	 
+	 #parsing of XML
 	 ch = ProcessHandler()
 	 saxparser = make_parser()
 	 saxparser.setContentHandler(ch)
@@ -39,21 +36,42 @@ class Process(WPSProcess):
 	 input.close()
 	 input = file(filename, 'r')
 	 x = saxparser.parse(input)
-	 outfile=process_path+str(ch.process_name)+".py"
-	 output=file(outfile,'w')
 	 
+	 processpath=process_path+str(ch.process_name)+".py"
 	 
+	 #checks if process chain already exists. If it exists the password is
+	 #ckecked and the process chain will be overwritten if the password is true.
 	
-	 output.write(ch.result)
-	 output.close
-         
-	 init = file(process_path+"__init__.py",'r')
-	 input = init.read()
-	 input = re.sub('\n','',input)
-	 input = re.sub(']','',input)
-	 input += ",\""+ str(ch.process_name)+"\"]"
-	 init = file(process_path+"__init__.py",'w')
-	 init.write(input)
-	 init.close()
-	 self.output.setValue('successfully inserted '+ ch.process_name)
+	 if os.path.isfile(processpath):
+	 	with open(processpath,'r') as f:
+			password = f.readline()[1:].strip()
+	 	if password == str(self.password.getValue()):
+	 		output=file(processpath,'w')
+	 		output.write('#'+str(self.password.getValue())+'\n'+ch.result)
+	 		output.close
+			message = 'successfully updated '+ ch.process_name
+		else:
+			message = 'you are not allowed to overwrite this process chain please choose a different name'
+			
+	 else:
+		output=file(processpath,'w')
+	 	output.write('#'+str(self.password.getValue())+'\n'+ch.result)
+	 	output.close
+			
+         #updates the __init__.py file
+	 	init = file(process_path+"__init__.py",'r')
+	 	input = init.read()
+	 	if ch.process_name in input:
+	 		message = 'process already exists'
+	 
+	 	else:
+	 		input = re.sub('\n','',input)
+	 		input = re.sub(']','',input)
+	 		input += ",\""+ str(ch.process_name)+"\"]"
+	 		init = file(process_path+"__init__.py",'w')
+	 		init.write(input)
+	 		init.close()
+			message = 'successfully inserted '+ ch.process_name
+	 
+	 self.output.setValue(message)
 	 return
