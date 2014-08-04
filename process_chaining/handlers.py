@@ -18,12 +18,13 @@ class ProcessHandler(ContentHandler):
 		self.trye=False
 		self.catch=False
 		self.count_t=0 # count of additional tabstops
+		self.synchron = True #execution modus, default is synchron
+		self.sleepSecs= 1 # seconds to wait at asynchronus executions
 		
 	def startElement(self,name,attrs):
 		if name == "workflow":
 			self.process_name=attrs['identifier']
 			self.result_head+="from owslib.wps import WebProcessingService \n"
-			self.result_head+="from owslib.wps import printInputOutput \n"
 			self.result_head+="from pywps.Process import WPSProcess \n"
 			self.result_head+="from owslib.wps import monitorExecution\n"
 			self.result_head+="import sys\n"
@@ -40,13 +41,23 @@ class ProcessHandler(ContentHandler):
 		if name == "inputs":
 			self.activ.append(name)
 			
-		if name == "input" and self.activ[-1] == 'inputs':			
+		if name == "input" and self.activ[-1] == 'inputs':
+		
+			
+						
 			
 			if attrs['type']=="literal":
 				self.inputs[attrs['localIdentifier']]=attrs['defaultValue']
-				self.result_head+="\t\tself."+attrs['localIdentifier']+" = self.addLiteralInput(identifier= \'" + attrs['localIdentifier'] + "\' , title= \'" + attrs['title']+"\')\n"
+				
+				self.result_head+="\t\tself."+attrs['localIdentifier']+" = self.addLiteralInput(identifier= \'" + attrs['localIdentifier'] + "\' , title= \'" + attrs['title']+"\'"
+	
+				if "defaultValue" in attrs:
+					self.result_head+=" ,default=\'"+ attrs['defaultValue']+"\'"
+				self.result_head+=") \n"	
 			if attrs['type'] == "complex":	
 				self.inputs[attrs['localIdentifier']]=attrs['defaultValue']
+				
+				
 				self.result_head+="\t\tself."+attrs['localIdentifier']+" = self.addComplexInput(identifier= \'" + attrs['localIdentifier'] + "\' , title= \'" + attrs['title']+"\',formats=[{\'mimeType\':\'"+attrs['mimeType']+"\'}])\n"
 		
 		if name == "try":
@@ -83,6 +94,18 @@ class ProcessHandler(ContentHandler):
 			self.result_body+=self.count_t*"\t"+"\t\t\t\twps_outputs.append((item.identifier, True))\n"
 			self.result_body+=self.count_t*"\t"+"\t\t\telse: wps_outputs.append((item.identifier, False))\n"
 		
+			
+			#synchron/asynchron process execution
+			if 'synchron' in attrs:
+				if attrs['synchron'] == 'True':	
+					self.synchron = True
+					#if 'sleepSecs' in attrs:
+					self.sleepSecs=30 #attrs['sleepSecs']
+						
+				elif attrs['synchron'] == 'False':
+					self.synchron = False
+				
+				
 		if name == "input" and self.activ[-1] == "startProcess":
 			
 			if 'sourceIdentifier' in attrs:  
@@ -140,6 +163,7 @@ class ProcessHandler(ContentHandler):
 		if name == "startProcess":
 			x = self.activ.pop()
 			
+			
 			#puts the inputs for the WPS request together
 			self.result_body+=self.count_t*"\t"+"\t\tinputs = ["
 			for item in self.process_inputs:
@@ -149,10 +173,20 @@ class ProcessHandler(ContentHandler):
 			self.result_body+="]\n"
 			
 			#builds the WPS request
-			self.result_body+=self.count_t*"\t"+"\t\texecution = wps.execute(identifier, inputs, output=wps_outputs)\n"
-			self.result_body+=self.count_t*"\t"+"\t\tmonitorExecution(execution)\n"
-			self.result_body+=self.count_t*"\t"+"\t\ttime.sleep(0.5)\n"
-			self.result_body+=self.count_t*"\t"+"\t\texecution.checkStatus(sleepSecs=0)\n"
+			#Asynchronus request
+			if self.synchron == False:
+				self.result_body+=self.count_t*"\t"+"\t\texecution = wps.execute(identifier, inputs, output=wps_outputs)\n"
+				self.result_body+=self.count_t*"\t"+"\t\tmonitorExecution(execution)\n"
+				self.result_body+=self.count_t*"\t"+"\t\texecution.checkStatus(sleepSecs=" + str(self.sleepSecs) + ")\n"
+				
+			#Synchronus request
+			elif self.synchron == True:
+				self.result_body+=self.count_t*"\t"+"\t\texecution = wps.execute(identifier, inputs)\n"
+			
+			
+			#process will be executet synchron by default
+			self.synchron=True
+			
 			self.result_body+=self.count_t*"\t"+"\t\tOutputs[\'"+self.activ_process + "\']={}\n"
 			
 			#retrival of complex and literal output
