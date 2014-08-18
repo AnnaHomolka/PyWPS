@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:vc="http://www.w3.org/2007/XMLSchema-versioning" elementFormDefault="qualified" attributeFormDefault="unqualified" vc:minVersion="1.1">
+
+	<!-- Predefinition of inputs -->
+	<xs:group name="processInputs">
+		<xs:sequence>
+			<xs:element name="input" minOccurs="1" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:attribute name="localIdentifier" use="optional"/>
+					<xs:attribute name="sourceIdentifier" use="optional"/>
+					<xs:attribute name="identifier" use="required"/>
+					<xs:attribute name="sourceProcess" use="optional"/>
+					<xs:attribute name="sourceName" use="optional"/>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="output" minOccurs="0" maxOccurs="unbounded">
+				<xs:complexType>
+					<xs:attribute name="identifier"/>
+					<xs:attribute name="localIdentifier"/>
+				</xs:complexType>
+			</xs:element>
+		</xs:sequence>
+	</xs:group>
+	<xs:attributeGroup name="processAttributes">
+		<xs:attribute name="service" type="xs:string" use="required"/>
+		<xs:attribute name="processID" type="xs:string" use="required"/>
+		<xs:attribute name="identifier" type="xs:string" use="required"/>
+		<xs:attribute name="synchron" use="optional">
+			<xs:simpleType>
+				<xs:restriction base="xs:string">
+					<xs:enumeration value="True"/>
+					<xs:enumeration value="False"/>
+				</xs:restriction>
+			</xs:simpleType>
+		</xs:attribute>
+		<xs:attribute name="sleepSecs" type="xs:int" use="optional"/>
+	</xs:attributeGroup>
+	
+	<!-- Start of the description of the process chain -->
+	<xs:element name="workflow">
+		<xs:complexType>
+			<xs:sequence>
+				
+				<!-- Description of the process inputs-->
+				<xs:element name="inputs" minOccurs="1" maxOccurs="1">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="input" minOccurs="1" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="title" type="xs:string" use="required"/>
+									<xs:attribute name="type" use="required">
+										<xs:simpleType>
+											<xs:restriction base="xs:string">
+												<xs:enumeration value="complex"/>
+												<xs:enumeration value="literal"/>
+												<xs:enumeration value="boundingBox"/>
+											</xs:restriction>
+										</xs:simpleType>
+									</xs:attribute>
+									<xs:attribute name="localIdentifier" type="xs:string" use="optional"/>
+									<xs:attribute name="defaultValue" type="xs:string" use="optional"/>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				
+				<!-- Desciption of the processes which will be chained-->
+				<xs:element name="try" minOccurs="1" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="startProcess" minOccurs="1" maxOccurs="1">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:group ref="processInputs"/>
+									</xs:sequence>
+									<xs:attributeGroup ref="processAttributes"/>
+								</xs:complexType>
+							</xs:element>
+							<xs:element name="catch">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="startProcess" minOccurs="1" maxOccurs="1">
+											<xs:complexType>
+												<xs:sequence>
+													<xs:group ref="processInputs"/>
+												</xs:sequence>
+												<xs:attributeGroup ref="processAttributes"/>
+											</xs:complexType>
+										</xs:element>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				
+				<!-- Description of the outputs of the processs chain-->
+				<xs:element name="outputs" minOccurs="1" maxOccurs="1">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="output" minOccurs="1" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:attribute name="sourceProcess" type="xs:string" use="optional"/>
+									<xs:attribute name="sourceIdentifier" type="xs:string" use="optional"/>
+									<xs:attribute name="localIdentifier" type="xs:string" use="optional"/>
+									<xs:attribute name="type" use="required">
+										<xs:simpleType>
+											<xs:restriction base="xs:string">
+												<xs:enumeration value="complex"/>
+												<xs:enumeration value="literal"/>
+												<xs:enumeration value="boundingBox"/>
+											</xs:restriction>
+										</xs:simpleType>
+									</xs:attribute>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			
+			</xs:sequence>
+			<xs:attribute name="identifier" type="xs:string" use="required"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

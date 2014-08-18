@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workflow identifier="example"  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="process_chain.xsd">
+	<inputs>
+		<input defaultValue="5" localIdentifier="Input1" title="first Input" type="literal"/>
+		<input defaultValue="4" localIdentifier="Input2" title="second Input" type="literal"/>
+		<input defaultValue="6" localIdentifier="Input3" title="third Input" type="literal"/>
+	</inputs>
+	<try>
+		<startProcess service="http://localhost/cgi-bin/pywps.cgi" processID="dummyprocess_1" identifier="dummyprocess" synchron="False" sleepSecs="1">
+			<input sourceIdentifier="Input1" identifier="i1"/>
+			<input sourceIdentifier="Input2" identifier="i2"/>
+			<input sourceIdentifier="Input3" identifier="i3"/>
+			<output localIdentifier="x" identifier="output1"/>
+		</startProcess>
+		<catch>
+			<startProcess service="http://localhost/cgi-bin/pywps.cgi" processID="dummyprocess_1" identifier="dummyprocess" synchron="False" sleepSecs="1">
+				<input sourceIdentifier="Input1" identifier="i1"/>
+				<input sourceIdentifier="Input2" identifier="i2"/>
+				<input sourceIdentifier="Input3" identifier="i3"/>
+				<output localIdentifier="x" identifier="output1"/>
+			</startProcess>
+		
+		</catch>
+	</try>
+	
+	<try>
+		<startProcess service="http://localhost/cgi-bin/pywps.cgi" processID="dummyprocess_2" identifier="dummyprocess">
+			<input sourceProcess="dummyprocess_1" sourceName="output1" identifier="i1"/>
+			<input localIdentifier='x' identifier="i2"/>
+			<input sourceProcess="dummyprocess_1" sourceName="output2" identifier="i3"/>
+		</startProcess>
+		<catch>
+			<startProcess service="http://localhost/cgi-bin/pywps.cgi" processID="dummyprocess_2" identifier="dummyprocess">
+				<input sourceProcess="dummyprocess_1" sourceName="output1" identifier="i1"/>
+				<input localIdentifier='x' identifier="i2"/>
+				<input sourceProcess="dummyprocess_1" sourceName="output2" identifier="i3"/>
+			</startProcess>
+		
+		</catch>
+	</try>
+	
+	<outputs>
+		<output sourceProcess="dummyprocess_1" sourceIdentifier="output1" type="literal"/>
+		<output sourceProcess="dummyprocess_2" sourceIdentifier="output2" type="literal"/>
+		<output localIdentifier="x" type="literal"/>
+	</outputs>
+</workflow>
